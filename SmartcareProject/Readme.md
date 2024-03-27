@@ -1,1 +1,0 @@
-Create SmartCare app for final Desd Project
