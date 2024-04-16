@@ -155,38 +155,38 @@ def admin_view_doctor_view(request):
     doctors=models.Doctor.objects.all().filter(status=True)
     return render(request,'smartcare/admin_view_doctor.html',{'doctors':doctors})
 
-# @login_required(login_url='adminlogin')
-# @user_passes_test(is_admin)
-# def delete_doctor_from_hospital_view(request,pk):
-#     doctor=models.Doctor.objects.get(id=pk)
-#     user=models.User.objects.get(id=doctor.user_id)
-#     user.delete()
-#     doctor.delete()
-#     return redirect('admin-view-doctor')
+@login_required(login_url='adminlogin')
+@user_passes_test(is_admin)
+def delete_doctor_from_hospital_view(request,pk):
+    doctor=models.Doctor.objects.get(id=pk)
+    user=models.User.objects.get(id=doctor.user_id)
+    user.delete()
+    doctor.delete()
+    return redirect('admin-view-doctor')
 
 
 
-# @login_required(login_url='adminlogin')
-# @user_passes_test(is_admin)
-# def update_doctor_view(request,pk):
-#     doctor=models.Doctor.objects.get(id=pk)
-#     user=models.User.objects.get(id=doctor.user_id)
+@login_required(login_url='adminlogin')
+@user_passes_test(is_admin)
+def update_doctor_view(request,pk):
+    doctor=models.Doctor.objects.get(id=pk)
+    user=models.User.objects.get(id=doctor.user_id)
 
-#     userForm=forms.DoctorUserForm(instance=user)
-#     doctorForm=forms.DoctorForm(request.FILES,instance=doctor)
-#     mydict={'userForm':userForm,'doctorForm':doctorForm}
-#     if request.method=='POST':
-#         userForm=forms.DoctorUserForm(request.POST,instance=user)
-#         doctorForm=forms.DoctorForm(request.POST,request.FILES,instance=doctor)
-#         if userForm.is_valid() and doctorForm.is_valid():
-#             user=userForm.save()
-#             user.set_password(user.password)
-#             user.save()
-#             doctor=doctorForm.save(commit=False)
-#             doctor.status=True
-#             doctor.save()
-#             return redirect('admin-view-doctor')
-#     return render(request,'hospital/admin_update_doctor.html',context=mydict)
+    userForm=forms.DoctorUserForm(instance=user)
+    doctorForm=forms.DoctorForm(request.FILES,instance=doctor)
+    mydict={'userForm':userForm,'doctorForm':doctorForm}
+    if request.method=='POST':
+        userForm=forms.DoctorUserForm(request.POST,instance=user)
+        doctorForm=forms.DoctorForm(request.POST,request.FILES,instance=doctor)
+        if userForm.is_valid() and doctorForm.is_valid():
+            user=userForm.save()
+            user.set_password(user.password)
+            user.save()
+            doctor=doctorForm.save(commit=False)
+            doctor.status=True
+            doctor.save()
+            return redirect('admin-view-doctor')
+    return render(request,'smartcare/admin_update_doctor.html',context=mydict)
 
 
 
@@ -233,6 +233,62 @@ def approve_doctor_view(request,pk):
     return redirect(reverse('admin-approve-doctor'))
 
 
+@login_required(login_url='adminlogin')
+@user_passes_test(is_admin)
+def reject_doctor_view(request,pk):
+    doctor=models.Doctor.objects.get(id=pk)
+    user=models.User.objects.get(id=doctor.user_id)
+    user.delete()
+    doctor.delete()
+    return redirect('admin-approve-doctor')
+
+
+#---------------------------------------------------------------------------------
+#------------------ADMIN APPOINTMENT VIEWS#------------------------------------
+#---------------------------------------------------------------------------------
+
+@login_required(login_url='adminlogin')
+@user_passes_test(is_admin)
+def admin_appointment_view(request):
+    return render(request,'smartcare/admin_appointment.html')
+
+
+@login_required(login_url='adminlogin')
+@user_passes_test(is_admin)
+def admin_view_appointment_view(request):
+    # appointments=models.Appointment.objects.all().filter(status=True)
+    return render(request,'smartcare/admin_view_appointment.html',
+                #   {'appointments':appointments}
+                  )
+
+
+@login_required(login_url='adminlogin')
+@user_passes_test(is_admin)
+def admin_add_appointment_view(request):
+    appointmentForm=forms.AppointmentForm()
+    mydict={'appointmentForm':appointmentForm,}
+    if request.method=='POST':
+        appointmentForm=forms.AppointmentForm(request.POST)
+        if appointmentForm.is_valid():
+            appointment=appointmentForm.save(commit=False)
+            appointment.doctorId=request.POST.get('doctorId')
+            appointment.patientId=request.POST.get('patientId')
+            appointment.doctorName=models.User.objects.get(id=request.POST.get('doctorId')).first_name
+            appointment.patientName=models.User.objects.get(id=request.POST.get('patientId')).first_name
+            appointment.status=True
+            appointment.save()
+        return HttpResponseRedirect('admin-view-appointment')
+    return render(request,'smartcare/admin_add_appointment.html',context=mydict)
+
+
+@login_required(login_url='adminlogin')
+@user_passes_test(is_admin)
+def admin_approve_appointment_view(request):
+    #those whose approval are needed
+    appointments=models.Appointment.objects.all().filter(status=False)
+    return render(request,'smartcare/admin_approve_appointment.html',{'appointments':appointments})
+
+
 #---------------------------------------------------------------------------------
 #------------------------ DOCTOR RELATED VIEWS START ------------------------------
 #---------------------------------------------------------------------------------
@@ -259,4 +315,88 @@ def doctor_dashboard_view(request):
     # 'doctor':models.Doctor.objects.get(user_id=request.user.id), #for profile picture of doctor in sidebar
     }
     return render(request,'smartcare/doctor_dashboard.html',context=mydict)
+
+
+
+@login_required(login_url='doctorlogin')
+@user_passes_test(is_doctor)
+def doctor_patient_view(request):
+    mydict={
+    'doctor':models.Doctor.objects.get(user_id=request.user.id), #for profile picture of doctor in sidebar
+    }
+    return render(request,'smartcare/doctor_patient.html',context=mydict)
+
+
+@login_required(login_url='doctorlogin')
+@user_passes_test(is_doctor)
+def doctor_view_patient_view(request):
+    # patients=models.Patient.objects.all().filter(status=True,assignedDoctorId=request.user.id)
+    # doctor=models.Doctor.objects.get(user_id=request.user.id) #for profile picture of doctor in sidebar
+    return render(request,'smartcare/doctor_view_patient.html',
+                #   {'patients':patients,'doctor':doctor} // uncomment this when patient is added to models
+                  )
+
+
+@login_required(login_url='doctorlogin')
+@user_passes_test(is_doctor)
+def doctor_view_discharge_patient_view(request):
+    # dischargedpatients=models.PatientDischargeDetails.objects.all().distinct().filter(assignedDoctorName=request.user.first_name)
+    # doctor=models.Doctor.objects.get(user_id=request.user.id) #for profile picture of doctor in sidebar
+    return render(request,'smartcare/doctor_view_discharge_patient.html'
+                #   ,{'dischargedpatients':dischargedpatients,'doctor':doctor} // uncomment this when patient is added to models 
+                  )
+
+@login_required(login_url='doctorlogin')
+@user_passes_test(is_doctor)
+def doctor_appointment_view(request):
+    doctor=models.Doctor.objects.get(user_id=request.user.id) #for profile picture of doctor in sidebar
+    return render(request,'smartcare/doctor_appointment.html',{'doctor':doctor})
+
+
+@login_required(login_url='doctorlogin')
+@user_passes_test(is_doctor)
+def doctor_view_appointment_view(request):
+    doctor=models.Doctor.objects.get(user_id=request.user.id) #for profile picture of doctor in sidebar
+    # appointments=models.Appointment.objects.all().filter(status=True,doctorId=request.user.id) // uncomment when appointment model added
+    patientid=[]
+    # for a in appointments:
+    #     patientid.append(a.patientId)
+    # patients=models.Patient.objects.all().filter(status=True,user_id__in=patientid) //uncomment when appointment model added
+    # appointments=zip(appointments,patients) // uncomment when appointment model added
+    return render(request,'smartcare/doctor_view_appointment.html',
+                #   {'appointments':appointments,'doctor':doctor} // uncomment when appointment model added
+                  )
+
+
+@login_required(login_url='doctorlogin')
+@user_passes_test(is_doctor)
+def doctor_delete_appointment_view(request):
+    doctor=models.Doctor.objects.get(user_id=request.user.id) #for profile picture of doctor in sidebar
+    # appointments=models.Appointment.objects.all().filter(status=True,doctorId=request.user.id)
+    # patientid=[]
+    # for a in appointments:                        // uncomment when appointment models,py is added
+    #     patientid.append(a.patientId)
+    # patients=models.Patient.objects.all().filter(status=True,user_id__in=patientid)
+    # appointments=zip(appointments,patients)
+    return render(request,'smartcare/doctor_delete_appointment.html',
+                #   {'appointments':appointments,'doctor':doctor}
+                  )
+
+
+@login_required(login_url='doctorlogin')
+@user_passes_test(is_doctor)
+def delete_appointment_view(request,pk):
+    # appointment=models.Appointment.objects.get(id=pk)
+    # appointment.delete()
+    # doctor=models.Doctor.objects.get(user_id=request.user.id) #for profile picture of doctor in sidebar
+    # appointments=models.Appointment.objects.all().filter(status=True,doctorId=request.user.id)
+    # patientid=[]
+    # for a in appointments:                            // uncomment when appointment is added ! 
+    #     patientid.append(a.patientId)
+    # patients=models.Patient.objects.all().filter(status=True,user_id__in=patientid)
+    # appointments=zip(appointments,patients)
+    return render(request,'smartcare/doctor_delete_appointment.html',
+                #   {'appointments':appointments,'doctor':doctor} 
+                  )
+
 

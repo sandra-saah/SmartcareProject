@@ -22,3 +22,12 @@ class DoctorForm(forms.ModelForm):
     class Meta:
         model=models.Doctor
         fields=['address','mobile','department','status']
+
+
+class AppointmentForm(forms.ModelForm):
+    doctorId=forms.ModelChoiceField(queryset=models.Doctor.objects.all().filter(status=True),empty_label="Doctor Name and Department", to_field_name="user_id")
+    # patientId=forms.ModelChoiceField(queryset=models.Patient.objects.all().filter(status=True),empty_label="Patient Name and Symptoms", to_field_name="user_id")
+    class Meta:
+        model=models.Appointment
+        fields=['description','status']
+
